@@ -151,7 +151,7 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     .args([
       "-c",
       &format!(
-        r#"{} -p {} -r {} -k {} \
+        r#"{} -p {} {} -k {} \
 /usr/lib/x86_64-linux-gnu/libGL* \
 /usr/lib/x86_64-linux-gnu/libEGL* \
 /usr/lib/x86_64-linux-gnu/libvulkan* \
