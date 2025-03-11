@@ -1072,24 +1072,28 @@ impl<R: Runtime> App<R> {
   pub fn run<F: FnMut(&AppHandle<R>, RunEvent) + 'static>(mut self, mut callback: F) {
     let app_handle = self.handle().clone();
     let manager = self.manager.clone();
-    self.runtime.take().unwrap().run(move |event| match event {
-      RuntimeRunEvent::Ready => {
-        if let Err(e) = setup(&mut self) {
-          panic!("Failed to setup app: {e}");
+    self
+      .runtime
+      .take()
+      .unwrap()
+      .run(move |event| match dbg!(&event) {
+        RuntimeRunEvent::Ready => {
+          if let Err(e) = setup(&mut self) {
+            panic!("Failed to setup app: {e}");
+          }
+          let event = on_event_loop_event(&app_handle, RuntimeRunEvent::Ready, &manager);
+          callback(&app_handle, event);
         }
-        let event = on_event_loop_event(&app_handle, RuntimeRunEvent::Ready, &manager);
-        callback(&app_handle, event);
-      }
-      RuntimeRunEvent::Exit => {
-        let event = on_event_loop_event(&app_handle, RuntimeRunEvent::Exit, &manager);
-        callback(&app_handle, event);
-        app_handle.cleanup_before_exit();
-      }
-      _ => {
-        let event = on_event_loop_event(&app_handle, event, &manager);
-        callback(&app_handle, event);
-      }
-    });
+        RuntimeRunEvent::Exit => {
+          let event = on_event_loop_event(&app_handle, RuntimeRunEvent::Exit, &manager);
+          callback(&app_handle, event);
+          app_handle.cleanup_before_exit();
+        }
+        _ => {
+          let event = on_event_loop_event(&app_handle, event, &manager);
+          callback(&app_handle, event);
+        }
+      });
   }
 
   /// Runs an iteration of the runtime event loop and immediately return.
@@ -1218,8 +1222,8 @@ impl Default for Builder<crate::Wry> {
   }
 }
 
-#[cfg(not(feature = "wry"))]
-#[cfg_attr(docsrs, doc(cfg(not(feature = "wry"))))]
+#[cfg(not(any(feature = "wry", feature = "cef")))]
+#[cfg_attr(docsrs, doc(cfg(not(any(feature = "wry", feature = "cef")))))]
 impl<R: Runtime> Default for Builder<R> {
   fn default() -> Self {
     Self::new()
