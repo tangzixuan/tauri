@@ -20,19 +20,19 @@ use std::{
   sync::Arc,
 };
 
-type UriSchemeProtocol = dyn Fn(&str, http::Request<Vec<u8>>, Box<dyn FnOnce(http::Response<Cow<'static, [u8]>>) + Send>)
+pub type UriSchemeProtocol = dyn Fn(&str, http::Request<Vec<u8>>, Box<dyn FnOnce(http::Response<Cow<'static, [u8]>>) + Send>)
   + Send
   + Sync
   + 'static;
 
-type WebResourceRequestHandler =
+pub type WebResourceRequestHandler =
   dyn Fn(http::Request<Vec<u8>>, &mut http::Response<Cow<'static, [u8]>>) + Send + Sync;
 
-type NavigationHandler = dyn Fn(&Url) -> bool + Send;
+pub type NavigationHandler = dyn Fn(&Url) -> bool + Send;
 
-type OnPageLoadHandler = dyn Fn(Url, PageLoadEvent) + Send;
+pub type OnPageLoadHandler = dyn Fn(Url, PageLoadEvent) + Send;
 
-type DownloadHandler = dyn Fn(DownloadEvent) -> bool + Send + Sync;
+pub type DownloadHandler = dyn Fn(DownloadEvent) -> bool + Send + Sync;
 
 /// Download event.
 pub enum DownloadEvent<'a> {
