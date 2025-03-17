@@ -4,7 +4,7 @@ use cef::{rc::*, *};
 use tauri_runtime::webview::UriSchemeProtocol;
 use url::Url;
 
-use crate::{cef_impl::utils::utf16_string_to_utf8, cef_object};
+use crate::cef_object;
 
 cef_object!(
   WebResourceRequestHandler,
@@ -99,14 +99,11 @@ impl ImplResourceHandler for WebResourceHandler {
 
     let url = request
       .get_url()
-      .map(utf16_string_to_utf8)
+      .map(|s| CefStringUtf8::from(&s))
       .map(|url| url.to_string())
       .and_then(|url| Url::parse(&url).ok());
 
     println!("{:?}", url.as_ref().map(ToString::to_string));
-
-    //callback.cont();
-    //return 1;
 
     if let Some(url) = url {
       // keep the callback around
@@ -158,6 +155,12 @@ impl ImplResourceHandler for WebResourceHandler {
     response_length.map(|length| {
       *length = -1;
     });
+
+    unsafe {
+      if let Some(redirect_url) = redirect_url {
+        cef_dll_sys::cef_string_utf16_clear(redirect_url.into());
+      }
+    }
   }
 }
 

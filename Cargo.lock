@@ -1180,9 +1180,9 @@ dependencies = [
 
 [[package]]
 name = "cef"
-version = "133.4.3"
+version = "134.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c1611266fdfe9be23af3a20a9f7a1c62c706ec6562d1cf7eed7b4d9d6ea91da5"
+checksum = "e4156be6384139c434a8c61d54e6778aad6ce6af4be238fceeea86ddc57c6f76"
 dependencies = [
  "cef-dll-sys",
  "windows-sys 0.59.0",
@@ -1190,9 +1190,9 @@ dependencies = [
 
 [[package]]
 name = "cef-dll-sys"
-version = "133.4.3"
+version = "134.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f310a1b6b61ff954dac822dc23798446cbd62c13e89b9b1a9f6acd7f0d849cdb"
+checksum = "4452fe6d4ecf7e4df898aa516d59a208e595a72fe3fd7952c77a25a3c59d401f"
 dependencies = [
  "anyhow",
  "cmake",

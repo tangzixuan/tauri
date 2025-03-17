@@ -16,7 +16,6 @@ use tauri_runtime::{
 use crate::{AppWindow, CefRuntime, Message};
 
 mod request_handler;
-mod utils;
 
 #[macro_export]
 macro_rules! cef_object {
