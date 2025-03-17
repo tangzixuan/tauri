@@ -163,7 +163,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tauri = { path = ".", default-features = false, features = ["wry"] }
 tokio = { version = "1", features = ["full"] }
-cargo_toml = "0.21"
+cargo_toml = "0.22"
 http-range = "0.1.5"
 
 # macOS
@@ -233,8 +233,8 @@ name = "multiwindow"
 path = "../../examples/multiwindow/main.rs"
 
 [[example]]
-name = "run-iteration"
-path = "../../examples/run-iteration/main.rs"
+name = "run-return"
+path = "../../examples/run-return/main.rs"
 
 [[example]]
 name = "splashscreen"

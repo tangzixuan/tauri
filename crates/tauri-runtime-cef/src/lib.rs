@@ -13,7 +13,7 @@ use tauri_runtime::{
     CursorIcon, DetachedWindow, DetachedWindowWebview, PendingWindow, RawWindow, WindowBuilder,
     WindowBuilderBase, WindowEvent, WindowId,
   },
-  DeviceEventFilter, EventLoopProxy, Icon, ProgressBarState, Result, RunEvent, Runtime,
+  Cookie, DeviceEventFilter, EventLoopProxy, Icon, ProgressBarState, Result, RunEvent, Runtime,
   RuntimeHandle, RuntimeInitArgs, UserAttentionType, UserEvent, WebviewDispatch, WindowDispatch,
   WindowEventId,
 };
@@ -571,6 +571,14 @@ impl<T: UserEvent> WebviewDispatch<T> for CefWebviewDispatcher<T> {
     Ok(())
   }
 
+  fn cookies_for_url(&self, url: Url) -> Result<Vec<Cookie<'static>>> {
+    Ok(Vec::new())
+  }
+
+  fn cookies(&self) -> Result<Vec<Cookie<'static>>> {
+    Ok(Vec::new())
+  }
+
   fn set_auto_resize(&self, auto_resize: bool) -> Result<()> {
     Ok(())
   }
@@ -925,6 +933,10 @@ impl<T: UserEvent> WindowDispatch<T> for CefWindowDispatcher<T> {
     Ok(())
   }
 
+  fn set_traffic_light_position(&self, position: Position) -> Result<()> {
+    Ok(())
+  }
+
   fn set_size_constraints(
     &self,
     constraints: tauri_runtime::window::WindowSizeConstraints,
@@ -942,6 +954,10 @@ impl<T: UserEvent> WindowDispatch<T> for CefWindowDispatcher<T> {
 
   fn is_enabled(&self) -> Result<bool> {
     Ok(true)
+  }
+
+  fn is_always_on_top(&self) -> Result<bool> {
+    Ok(false)
   }
 
   fn set_background_color(&self, color: Option<tauri_utils::config::Color>) -> Result<()> {
@@ -1119,6 +1135,10 @@ impl<T: UserEvent> Runtime<T> for CefRuntime<T> {
   fn hide(&self) {}
 
   fn set_device_event_filter(&mut self, filter: DeviceEventFilter) {}
+
+  fn run_return<F: FnMut(RunEvent<T>)>(self, callback: F) -> i32 {
+    0
+  }
 
   #[cfg(any(
     target_os = "macos",
