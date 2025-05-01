@@ -91,7 +91,10 @@
         "linux": {
           "appimage": {
             "bundleMediaFramework": false,
-            "files": {}
+            "files": {},
+            "squashfs": false,
+            "useNewFormat": false,
+            "zsync": null
           },
           "deb": {
             "files": {}
@@ -1965,7 +1968,10 @@
           "default": {
             "appimage": {
               "bundleMediaFramework": false,
-              "files": {}
+              "files": {},
+              "squashfs": false,
+              "useNewFormat": false,
+              "zsync": null
             },
             "deb": {
               "files": {}
@@ -2778,7 +2784,10 @@
           "description": "Configuration for the AppImage bundle.",
           "default": {
             "bundleMediaFramework": false,
-            "files": {}
+            "files": {},
+            "squashfs": false,
+            "useNewFormat": false,
+            "zsync": null
           },
           "allOf": [
             {
@@ -2829,6 +2838,25 @@
           "additionalProperties": {
             "type": "string"
           }
+        },
+        "useNewFormat": {
+          "description": "Use the new AppImage bundler based on sharun instead of linuxdeploy.\n\n Enabling this is strongly recommended as it will produce truly portable\n AppImages that allow you to build on newer distros while still supporting\n older distros. The produced AppImage also has fewer general issues and\n supports Wayland without forcing the use of XWayland.\n\n The drawbacks of this option is that the AppImage will be larger, only supports\n x86_64 and aarch64 and currently can only be built on Debian/Ubuntu based systems.\n For Ubuntu it requires at least 24.04 and above.",
+          "default": false,
+          "type": "boolean"
+        },
+        "squashfs": {
+          "description": "Make the AppImage use squashfs instead of dwarfs.\n\n Enabling this option will improve compatibility with AppImage integration\n tools but will also increase the file size.\n\n Ignored if `use_new_format` is disabled.",
+          "default": false,
+          "type": "boolean"
+        },
+        "zsync": {
+          "description": "URL to the AppImage's zsync update file. See\n <https://docs.appimage.org/packaging-guide/optional/updates.html> for more information.",
+          "default": null,
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uri"
         }
       },
       "additionalProperties": false

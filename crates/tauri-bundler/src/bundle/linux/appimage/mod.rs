@@ -12,9 +12,9 @@ use crate::Settings;
 mod linuxdeploy;
 mod sharun;
 
-// TODO: This needs to be a config, not an env var post PoC
+// TODO: Consider auto fallback to linuxdeploy on unsupported systems.
 pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
-  if std::env::var("TAURI_NEW_APPIMAGE").unwrap_or("false".to_string()) == "true" {
+  if settings.appimage().use_new_format {
     sharun::bundle_project(settings)
   } else {
     linuxdeploy::bundle_project(settings)
