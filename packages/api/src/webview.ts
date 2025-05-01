@@ -30,7 +30,12 @@ import {
   once
 } from './event'
 import { invoke } from './core'
-import { Color, Window, getCurrentWindow } from './window'
+import {
+  BackgroundThrottlingPolicy,
+  Color,
+  Window,
+  getCurrentWindow
+} from './window'
 import { WebviewWindow } from './webviewWindow'
 
 /** The drag and drop event types. */
@@ -101,27 +106,45 @@ export type WebviewLabel = string
  *
  * const appWindow = new Window('uniqueLabel');
  *
- * // loading embedded asset:
- * const webview = new Webview(appWindow, 'theUniqueLabel', {
- *   url: 'path/to/page.html'
- * });
- * // alternatively, load a remote URL:
- * const webview = new Webview(appWindow, 'theUniqueLabel', {
- *   url: 'https://github.com/tauri-apps/tauri'
- * });
+ * appWindow.once('tauri://created', async function () {
+ *   // `new Webview` Should be called after the window is successfully created,
+ *   // or webview may not be attached to the window since window is not created yet.
  *
- * webview.once('tauri://created', function () {
- *  // webview successfully created
- * });
- * webview.once('tauri://error', function (e) {
- *  // an error happened creating the webview
- * });
+ *   // loading embedded asset:
+ *   const webview = new Webview(appWindow, 'theUniqueLabel', {
+ *     url: 'path/to/page.html',
  *
- * // emit an event to the backend
- * await webview.emit("some-event", "data");
- * // listen to an event from the backend
- * const unlisten = await webview.listen("event-name", e => {});
- * unlisten();
+ *     // create a webview with specific logical position and size
+ *     x: 0,
+ *     y: 0,
+ *     width: 800,
+ *     height: 600,
+ *   });
+ *   // alternatively, load a remote URL:
+ *   const webview = new Webview(appWindow, 'theUniqueLabel', {
+ *     url: 'https://github.com/tauri-apps/tauri',
+ *
+ *     // create a webview with specific logical position and size
+ *     x: 0,
+ *     y: 0,
+ *     width: 800,
+ *     height: 600,
+ *   });
+ *
+ *   webview.once('tauri://created', function () {
+ *     // webview successfully created
+ *   });
+ *   webview.once('tauri://error', function (e) {
+ *     // an error happened creating the webview
+ *   });
+ *
+ *
+ *   // emit an event to the backend
+ *   await webview.emit("some-event", "data");
+ *   // listen to an event from the backend
+ *   const unlisten = await webview.listen("event-name", e => { });
+ *   unlisten();
+ * });
  * ```
  *
  * @since 2.0.0
@@ -142,14 +165,24 @@ class Webview {
    * import { Window } from '@tauri-apps/api/window'
    * import { Webview } from '@tauri-apps/api/webview'
    * const appWindow = new Window('my-label')
-   * const webview = new Webview(appWindow, 'my-label', {
-   *   url: 'https://github.com/tauri-apps/tauri'
-   * });
-   * webview.once('tauri://created', function () {
-   *  // webview successfully created
-   * });
-   * webview.once('tauri://error', function (e) {
-   *  // an error happened creating the webview
+   *
+   * appWindow.once('tauri://created', async function() {
+   *   const webview = new Webview(appWindow, 'my-label', {
+   *     url: 'https://github.com/tauri-apps/tauri',
+   *
+   *     // create a webview with specific logical position and size
+   *     x: 0,
+   *     y: 0,
+   *     width: 800,
+   *     height: 600,
+   *   });
+   *
+   *   webview.once('tauri://created', function () {
+   *     // webview successfully created
+   *   });
+   *   webview.once('tauri://error', function (e) {
+   *     // an error happened creating the webview
+   *   });
    * });
    * ```
    *
@@ -167,8 +200,10 @@ class Webview {
     if (!options?.skip) {
       invoke('plugin:webview|create_webview', {
         windowLabel: window.label,
-        label,
-        options
+        options: {
+          ...options,
+          label
+        }
       })
         .then(async () => this.emit('tauri://created'))
         .catch(async (e: string) => this.emit('tauri://error', e))
@@ -286,7 +321,7 @@ class Webview {
    * @param event Event name. Must include only alphanumeric characters, `-`, `/`, `:` and `_`.
    * @param payload Event payload.
    */
-  async emit(event: string, payload?: unknown): Promise<void> {
+  async emit<T>(event: string, payload?: T): Promise<void> {
     if (localTauriEvents.includes(event)) {
       // eslint-disable-next-line
       for (const handler of this.listeners[event] || []) {
@@ -298,7 +333,7 @@ class Webview {
       }
       return
     }
-    return emit(event, payload)
+    return emit<T>(event, payload)
   }
 
   /**
@@ -314,10 +349,10 @@ class Webview {
    * @param event Event name. Must include only alphanumeric characters, `-`, `/`, `:` and `_`.
    * @param payload Event payload.
    */
-  async emitTo(
+  async emitTo<T>(
     target: string | EventTarget,
     event: string,
-    payload?: unknown
+    payload?: T
   ): Promise<void> {
     if (localTauriEvents.includes(event)) {
       // eslint-disable-next-line
@@ -330,7 +365,7 @@ class Webview {
       }
       return
     }
-    return emitTo(target, event, payload)
+    return emitTo<T>(target, event, payload)
   }
 
   /** @ignore */
@@ -398,7 +433,7 @@ class Webview {
    * @returns A promise indicating the success or failure of the operation.
    */
   async close(): Promise<void> {
-    return invoke('plugin:webview|close', {
+    return invoke('plugin:webview|webview_close', {
       label: this.label
     })
   }
@@ -454,6 +489,23 @@ class Webview {
   async setFocus(): Promise<void> {
     return invoke('plugin:webview|set_webview_focus', {
       label: this.label
+    })
+  }
+
+  /**
+   * Sets whether the webview should automatically grow and shrink its size and position when the parent window resizes.
+   * @example
+   * ```typescript
+   * import { getCurrentWebview } from '@tauri-apps/api/webview';
+   * await getCurrentWebview().setAutoReisze(true);
+   * ```
+   *
+   * @returns A promise indicating the success or failure of the operation.
+   */
+  async setAutoResize(autoResize: boolean): Promise<void> {
+    return invoke('plugin:webview|set_webview_auto_resize', {
+      label: this.label,
+      value: autoResize
     })
   }
 
@@ -767,6 +819,41 @@ interface WebviewOptions {
    * @since 2.1.0
    */
   backgroundColor?: Color
+
+  /** Change the default background throttling behaviour.
+   *
+   * By default, browsers use a suspend policy that will throttle timers and even unload
+   * the whole tab (view) to free resources after roughly 5 minutes when a view became
+   * minimized or hidden. This will pause all tasks until the documents visibility state
+   * changes back from hidden to visible by bringing the view back to the foreground.
+   *
+   * ## Platform-specific
+   *
+   * - **Linux / Windows / Android**: Unsupported. Workarounds like a pending WebLock transaction might suffice.
+   * - **iOS**: Supported since version 17.0+.
+   * - **macOS**: Supported since version 14.0+.
+   *
+   * see https://github.com/tauri-apps/tauri/issues/5250#issuecomment-2569380578
+   *
+   * @since 2.3.0
+   */
+  backgroundThrottling?: BackgroundThrottlingPolicy
+  /**
+   * Whether we should disable JavaScript code execution on the webview or not.
+   */
+  javascriptDisabled?: boolean
+  /**
+   * on macOS and iOS there is a link preview on long pressing links, this is enabled by default.
+   * see https://docs.rs/objc2-web-kit/latest/objc2_web_kit/struct.WKWebView.html#method.allowsLinkPreview
+   */
+  allowLinkPreview?: boolean
+  /**
+   * Allows disabling the input accessory view on iOS.
+   *
+   * The accessory view is the view that appears above the keyboard when a text input element is focused.
+   * It usually displays a view with "Done", "Next" buttons.
+   */
+  disableInputAccessoryView?: boolean
 }
 
 export { Webview, getCurrentWebview, getAllWebviews }

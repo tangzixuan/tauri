@@ -25,7 +25,8 @@ use anyhow::Context;
 use cargo_mobile2::{
   apple::{
     config::Config as AppleConfig,
-    device::{Device, DeviceKind},
+    device::{Device, DeviceKind, RunError},
+    target::BuildError,
   },
   env::Env,
   opts::{NoiseLevel, Profile},
@@ -54,9 +55,15 @@ pub struct Options {
   /// Exit on panic
   #[clap(short, long)]
   exit_on_panic: bool,
-  /// JSON string or path to JSON file to merge with tauri.conf.json
+  /// JSON strings or paths to JSON, JSON5 or TOML files to merge with the default configuration file
+  ///
+  /// Configurations are merged in the order they are provided, which means a particular value overwrites previous values when a config key-value pair conflicts.
+  ///
+  /// Note that a platform-specific file is looked up and merged with the default file by default
+  /// (tauri.macos.conf.json, tauri.linux.conf.json, tauri.windows.conf.json, tauri.android.conf.json and tauri.ios.conf.json)
+  /// but you can use this for more specific use cases such as different build flavors.
   #[clap(short, long)]
-  pub config: Option<ConfigValue>,
+  pub config: Vec<ConfigValue>,
   /// Run the code in release mode
   #[clap(long = "release")]
   pub release_mode: bool,
@@ -148,7 +155,7 @@ fn run_command(options: Options, noise_level: NoiseLevel) -> Result<()> {
 
   let tauri_config = get_tauri_config(
     tauri_utils::platform::Target::Ios,
-    options.config.as_ref().map(|c| &c.0),
+    &options.config.iter().map(|c| &c.0).collect::<Vec<_>>(),
   )?;
   let (interface, config) = {
     let tauri_config_guard = tauri_config.lock().unwrap();
@@ -162,7 +169,7 @@ fn run_command(options: Options, noise_level: NoiseLevel) -> Result<()> {
       tauri_config_,
       dev_options.features.as_ref(),
       &Default::default(),
-    );
+    )?;
 
     (interface, config)
   };
@@ -277,24 +284,29 @@ fn run_dev(
         cli_options,
       )?;
 
-      if open {
+      let open_xcode = || {
         if !set_host {
           log::warn!("{PHYSICAL_IPHONE_DEV_WARNING}");
         }
         open_and_wait(config, &env)
+      };
+
+      if open {
+        open_xcode()
       } else if let Some(device) = &device {
         match run(device, options, config, noise_level, &env) {
           Ok(c) => Ok(Box::new(c) as Box<dyn DevProcess + Send>),
+          Err(RunError::BuildFailed(BuildError::Sdk(sdk_err))) => {
+            log::warn!("{sdk_err}");
+            open_xcode()
+          }
           Err(e) => {
             crate::dev::kill_before_dev_process();
-            Err(e)
+            Err(e.into())
           }
         }
       } else {
-        if !set_host {
-          log::warn!("{PHYSICAL_IPHONE_DEV_WARNING}");
-        }
-        open_and_wait(config, &env)
+        open_xcode()
       }
     },
   )
@@ -306,7 +318,7 @@ fn run(
   config: &AppleConfig,
   noise_level: NoiseLevel,
   env: &Env,
-) -> crate::Result<DevChild> {
+) -> std::result::Result<DevChild, RunError> {
   let profile = if options.debug {
     Profile::Debug
   } else {
@@ -322,5 +334,4 @@ fn run(
       profile,
     )
     .map(DevChild::new)
-    .map_err(Into::into)
 }

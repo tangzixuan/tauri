@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         config:
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             rust_target: x86_64-unknown-linux-gnu
             ext: ''
             args: ''
@@ -37,7 +37,7 @@ jobs:
           - os: windows-latest
             rust_target: aarch64-pc-windows-msvc
             ext: '.exe'
-            args: '--no-default-features --features native-tls-vendored'
+            args: ''
 
     steps:
       - uses: actions/checkout@v4

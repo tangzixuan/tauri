@@ -1,5 +1,52 @@
 # Changelog
 
+## \[2.5.0]
+
+### New Features
+
+- [`66e6325f4`](https://www.github.com/tauri-apps/tauri/commit/66e6325f43efa49ec2165c45afec911a1a14ecfb) ([#13136](https://www.github.com/tauri-apps/tauri/pull/13136)) Allow passing the callback as the parameter of constructor of `Channel` so you can use it like this `new Channel((message) => console.log(message))`
+- [`ea36294cb`](https://www.github.com/tauri-apps/tauri/commit/ea36294cbca98f7725c91d1464fd92e77c89698a) ([#13208](https://www.github.com/tauri-apps/tauri/pull/13208)) Added `disableInputAccessoryView: bool` config for iOS.
+- [`c1cd0a2dd`](https://www.github.com/tauri-apps/tauri/commit/c1cd0a2ddb5bc3e99451cbe399b5fc9f0035f571) ([#13090](https://www.github.com/tauri-apps/tauri/pull/13090)) macOS/iOS: add option to disable or enable link previews when building a webview (the webkit api has it enabled by default)
+
+  - `WindowOptions::allowLinkPreview`
+  - `WebviewOptions::allowLinkPreview`
+- [`b072e2b29`](https://www.github.com/tauri-apps/tauri/commit/b072e2b2967640ae4fa1af466ae878c156551edd) ([#9687](https://www.github.com/tauri-apps/tauri/pull/9687)) Add `preventOverflow` config option to prevent the window from overflowing the monitor size on creation
+- [`dd4f13ce4`](https://www.github.com/tauri-apps/tauri/commit/dd4f13ce4b3cd89cde2fa3f18a063c272f215621) ([#13185](https://www.github.com/tauri-apps/tauri/pull/13185)) Added `app.setDockVisibility` for macOS.
+
+### Enhancements
+
+- [`b8f86669a`](https://www.github.com/tauri-apps/tauri/commit/b8f86669ab05f7dbdd15839a20999e63dc43bda6) ([#13145](https://www.github.com/tauri-apps/tauri/pull/13145)) `core.isTauri` now leverages `globalThis` instead of `window` in order to be used in unit tests.
+
+### Bug Fixes
+
+- [`66e6325f4`](https://www.github.com/tauri-apps/tauri/commit/66e6325f43efa49ec2165c45afec911a1a14ecfb) ([#13136](https://www.github.com/tauri-apps/tauri/pull/13136)) Fix `Channel`'s callback attached to `window` never cleaned up
+
+## \[2.4.1]
+
+### Enhancements
+
+- [`dd1372833`](https://www.github.com/tauri-apps/tauri/commit/dd137283341ce0e6aabfd158d07d77c6feeb920e) ([#13066](https://www.github.com/tauri-apps/tauri/pull/13066) by [@ahaoboy](https://www.github.com/tauri-apps/tauri/../../ahaoboy)) Add a generic to `emit` and `emitTo` functions for the `payload` instead of the previously used type (`unknown`).
+
+## \[2.4.0]
+
+### New Features
+
+- [`d8059bad3`](https://www.github.com/tauri-apps/tauri/commit/d8059bad3cc922dc369c39ca1cfa49aaec31322e) ([#12900](https://www.github.com/tauri-apps/tauri/pull/12900) by [@Simon-Laux](https://www.github.com/tauri-apps/tauri/../../Simon-Laux)) add `AppHandle.fetch_data_store_identifiers` and `AppHandle.remove_data_store` (macOS and iOS only)
+- [`20c190691`](https://www.github.com/tauri-apps/tauri/commit/20c19069125c89b2d45a2127278c9ffc2df35fc2) ([#12821](https://www.github.com/tauri-apps/tauri/pull/12821) by [@Simon-Laux](https://www.github.com/tauri-apps/tauri/../../Simon-Laux)) Added `WindowOptions::javascriptDisabled` and `WebviewOptions::javascriptDisabled`.
+- [`060de5bbd`](https://www.github.com/tauri-apps/tauri/commit/060de5bbdddca384e3965a8938d89840f27c581d) ([#12837](https://www.github.com/tauri-apps/tauri/pull/12837) by [@niladrix719](https://www.github.com/tauri-apps/tauri/../../niladrix719)) Added `getIdentifier()` function to get the application identifier configured in tauri.conf.json
+- [`be2e6b85f`](https://www.github.com/tauri-apps/tauri/commit/be2e6b85fed226732b4a98f68cc5d72b4f8f5a13) ([#12944](https://www.github.com/tauri-apps/tauri/pull/12944) by [@Simon-Laux](https://www.github.com/tauri-apps/tauri/../../Simon-Laux)) Added `Window#isAlwaysOnTop` and `WebviewWindow#isAlwaysOnTop` methods.
+- [`bcdd51025`](https://www.github.com/tauri-apps/tauri/commit/bcdd510254ebe37827e22a5ffeb944321361e97c) ([#13012](https://www.github.com/tauri-apps/tauri/pull/13012) by [@lucasfernog](https://www.github.com/tauri-apps/tauri/../../lucasfernog)) The `path` basename and extname APIs now accept Android content URIs, such as the paths returned by the dialog plugin.
+
+### Bug Fixes
+
+- [`3a74dc8f3`](https://www.github.com/tauri-apps/tauri/commit/3a74dc8f3421112b1d0a32b6a432606b1f33cc25) ([#12935](https://www.github.com/tauri-apps/tauri/pull/12935) by [@tk103331](https://www.github.com/tauri-apps/tauri/../../tk103331)) Fix `Webview.close` always fail with command not found
+
+## \[2.3.0]
+
+### Enhancements
+
+- [`a2d36b8c3`](https://www.github.com/tauri-apps/tauri/commit/a2d36b8c34a8dcfc6736797ca5cd4665faf75e7e) ([#12181](https://www.github.com/tauri-apps/tauri/pull/12181) by [@bastiankistner](https://www.github.com/tauri-apps/tauri/../../bastiankistner)) Add an option to change the default background throttling policy (currently for WebKit only).
+
 ## \[2.2.0]
 
 ### New Features

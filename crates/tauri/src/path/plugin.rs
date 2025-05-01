@@ -132,19 +132,19 @@ pub fn normalize(path: String) -> String {
 }
 
 #[command(root = "crate")]
-pub fn join(mut paths: Vec<String>) -> String {
+pub fn join(paths: Vec<String>) -> String {
   let path = PathBuf::from(
     paths
-      .iter_mut()
-      .map(|p| {
-        // Add a `MAIN_SEPARATOR` if it doesn't already have one.
+      .into_iter()
+      .map(|mut p| {
+        // Add a `MAIN_SEPARATOR` if it doesn't already have one and is not an empty string.
         // Doing this to ensure that the vector elements are separated in
         // the resulting string so path.components() can work correctly when called
         // in `normalize_path_no_absolute()` later on.
-        if !p.ends_with('/') && !p.ends_with('\\') {
+        if !p.is_empty() && !p.ends_with('/') && !p.ends_with('\\') {
           p.push(MAIN_SEPARATOR);
         }
-        p.to_string()
+        p
       })
       .collect::<String>(),
   );
@@ -169,8 +169,9 @@ pub fn dirname(path: String) -> Result<PathBuf> {
 }
 
 #[command(root = "crate")]
-pub fn extname(path: String) -> Result<String> {
-  match Path::new(&path)
+pub fn extname<R: Runtime>(app: AppHandle<R>, path: String) -> Result<String> {
+  let file_name = app.path().file_name(&path).ok_or(Error::NoExtension)?;
+  match Path::new(&file_name)
     .extension()
     .and_then(std::ffi::OsStr::to_str)
   {
@@ -180,14 +181,14 @@ pub fn extname(path: String) -> Result<String> {
 }
 
 #[command(root = "crate")]
-pub fn basename(path: &str, ext: Option<&str>) -> Result<String> {
-  let file_name = Path::new(path).file_name().map(|f| f.to_string_lossy());
+pub fn basename<R: Runtime>(app: AppHandle<R>, path: &str, ext: Option<&str>) -> Result<String> {
+  let file_name = app.path().file_name(path);
   match file_name {
     Some(p) => {
       let maybe_stripped = if let Some(ext) = ext {
         p.strip_suffix(ext).unwrap_or(&p).to_string()
       } else {
-        p.to_string()
+        p
       };
       Ok(maybe_stripped)
     }
@@ -221,6 +222,7 @@ pub(crate) fn init<R: Runtime>() -> TauriPlugin<R> {
 
   Builder::new("path")
     .invoke_handler(crate::generate_handler![
+      #![plugin(path)]
       resolve_directory,
       resolve,
       normalize,
@@ -250,37 +252,62 @@ pub(crate) fn init<R: Runtime>() -> TauriPlugin<R> {
 
 #[cfg(test)]
 mod tests {
+  use crate::test::mock_app;
 
   #[test]
   fn basename() {
+    let app = mock_app();
     let path = "/path/to/some-json-file.json";
     assert_eq!(
-      super::basename(path, Some(".json")).unwrap(),
+      super::basename(app.handle().clone(), path, Some(".json")).unwrap(),
       "some-json-file"
     );
 
     let path = "/path/to/some-json-file.json";
     assert_eq!(
-      super::basename(path, Some("json")).unwrap(),
+      super::basename(app.handle().clone(), path, Some("json")).unwrap(),
       "some-json-file."
     );
 
     let path = "/path/to/some-json-file.html.json";
     assert_eq!(
-      super::basename(path, Some(".json")).unwrap(),
+      super::basename(app.handle().clone(), path, Some(".json")).unwrap(),
       "some-json-file.html"
     );
 
     let path = "/path/to/some-json-file.json.json";
     assert_eq!(
-      super::basename(path, Some(".json")).unwrap(),
+      super::basename(app.handle().clone(), path, Some(".json")).unwrap(),
       "some-json-file.json"
     );
 
     let path = "/path/to/some-json-file.json.html";
     assert_eq!(
-      super::basename(path, Some(".json")).unwrap(),
+      super::basename(app.handle().clone(), path, Some(".json")).unwrap(),
       "some-json-file.json.html"
     );
+  }
+
+  #[test]
+  fn join() {
+    fn check(paths: Vec<&str>, expected_unix: &str, expected_windows: &str) {
+      let expected = if cfg!(windows) {
+        expected_windows
+      } else {
+        expected_unix
+      };
+      let paths = paths.into_iter().map(String::from).collect();
+      assert_eq!(super::join(paths), expected);
+    }
+
+    check(vec![""], ".", ".");
+    check(vec!["", ""], ".", ".");
+    check(vec!["a"], "a", "a");
+    check(vec!["", "a"], "a", "a");
+    check(vec!["a", "b"], "a/b", r"a\b");
+    check(vec!["a", "", "b"], "a/b", r"a\b");
+    check(vec!["a", "/b", "c"], "a/b/c", r"a\b\c");
+    check(vec!["a", "b/c", "d"], "a/b/c/d", r"a\b\c\d");
+    check(vec!["a/", "b"], "a/b", r"a\b");
   }
 }

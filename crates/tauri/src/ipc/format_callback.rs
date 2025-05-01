@@ -39,7 +39,7 @@ const MIN_JSON_PARSE_LEN: usize = 10_240;
 ///
 /// 1. `serde_json`'s ability to correctly escape and format json into a string.
 /// 2. JavaScript engines not accepting anything except another unescaped, literal single quote
-///     character to end a string that was opened with it.
+///    character to end a string that was opened with it.
 fn serialize_js_with<F: FnOnce(&str) -> String>(
   json_string: String,
   options: serialize_to_javascript::Options,
@@ -92,16 +92,20 @@ pub fn format<T: Serialize>(function_name: CallbackFn, arg: &T) -> crate::Result
 /// See [json-parse-benchmark](https://github.com/GoogleChromeLabs/json-parse-benchmark).
 pub fn format_raw(function_name: CallbackFn, json_string: String) -> crate::Result<String> {
   serialize_js_with(json_string, Default::default(), |arg| {
-    format!(
-      r#"
-    if (window["_{fn}"]) {{
-      window["_{fn}"]({arg})
-    }} else {{
-      console.warn("[TAURI] Couldn't find callback id {fn} in window. This happens when the app is reloaded while Rust is running an asynchronous operation.")
-    }}"#,
-      fn = function_name.0
-    )
+    format_raw_js(function_name.0, arg)
   })
+}
+
+/// Formats a callback function invocation, properly accounting for error handling.
+pub fn format_raw_js(id: u32, js: &str) -> String {
+  format!(
+    r#"
+  if (window["_{id}"]) {{
+    window["_{id}"]({js})
+  }} else {{
+    console.warn("[TAURI] Couldn't find callback id {id} in window. This happens when the app is reloaded while Rust is running an asynchronous operation.")
+  }}"#
+  )
 }
 
 /// Formats a serializable Result type to its Promise response.

@@ -7,7 +7,7 @@
 pub(crate) mod plugin;
 
 use tauri_runtime::{
-  dpi::{PhysicalPosition, PhysicalSize},
+  dpi::{PhysicalPosition, PhysicalRect, PhysicalSize},
   webview::PendingWebview,
 };
 pub use tauri_utils::{config::Color, WindowEffect as Effect, WindowEffectState as EffectState};
@@ -19,7 +19,7 @@ use crate::{
   app::AppHandle,
   event::{Event, EventId, EventTarget},
   ipc::{CommandArg, CommandItem, InvokeError},
-  manager::AppManager,
+  manager::{AppManager, EmitPayload},
   runtime::{
     monitor::Monitor as RuntimeMonitor,
     window::{DetachedWindow, PendingWindow, WindowBuilder as _},
@@ -28,7 +28,7 @@ use crate::{
   sealed::{ManagerBase, RuntimeOrDispatch},
   utils::config::{WindowConfig, WindowEffectsConfig},
   webview::WebviewBuilder,
-  Emitter, EventLoopMessage, Listener, Manager, ResourceTable, Runtime, Theme, Webview,
+  Emitter, EventLoopMessage, EventName, Listener, Manager, ResourceTable, Runtime, Theme, Webview,
   WindowEvent,
 };
 #[cfg(desktop)]
@@ -61,6 +61,7 @@ pub struct Monitor {
   pub(crate) name: Option<String>,
   pub(crate) size: PhysicalSize<u32>,
   pub(crate) position: PhysicalPosition<i32>,
+  pub(crate) work_area: PhysicalRect<i32, u32>,
   pub(crate) scale_factor: f64,
 }
 
@@ -70,6 +71,7 @@ impl From<RuntimeMonitor> for Monitor {
       name: monitor.name,
       size: monitor.size,
       position: monitor.position,
+      work_area: monitor.work_area,
       scale_factor: monitor.scale_factor,
     }
   }
@@ -90,6 +92,11 @@ impl Monitor {
   /// Returns the top-left corner position of the monitor relative to the larger full screen area.
   pub fn position(&self) -> &PhysicalPosition<i32> {
     &self.position
+  }
+
+  /// Returns the monitor's work_area.
+  pub fn work_area(&self) -> &PhysicalRect<i32, u32> {
+    &self.work_area
   }
 
   /// Returns the scale factor that can be used to map logical pixels to physical pixels, and vice versa.
@@ -140,8 +147,8 @@ impl<'a, R: Runtime, M: Manager<R>> WindowBuilder<'a, R, M> {
   ///
   /// # Known issues
   ///
-  /// On Windows, this function deadlocks when used in a synchronous command, see [the Webview2 issue].
-  /// You should use `async` commands when creating windows.
+  /// On Windows, this function deadlocks when used in a synchronous command or event handlers, see [the Webview2 issue].
+  /// You should use `async` commands and separate threads when creating windows.
   ///
   /// # Examples
   ///
@@ -217,8 +224,8 @@ async fn create_window(app: tauri::AppHandle) {
   ///
   /// # Known issues
   ///
-  /// On Windows, this function deadlocks when used in a synchronous command, see [the Webview2 issue].
-  /// You should use `async` commands when creating windows.
+  /// On Windows, this function deadlocks when used in a synchronous command or event handlers, see [the Webview2 issue].
+  /// You should use `async` commands and separate threads when creating windows.
   ///
   /// # Examples
   ///
@@ -341,7 +348,10 @@ tauri::Builder::default()
     self,
     webview: Option<PendingWebview<EventLoopMessage, R>>,
   ) -> crate::Result<Window<R>> {
-    let mut pending = PendingWindow::new(self.window_builder.clone(), self.label.clone())?;
+    #[cfg(desktop)]
+    let theme = self.window_builder.get_theme();
+
+    let mut pending = PendingWindow::new(self.window_builder, self.label)?;
     if let Some(webview) = webview {
       pending.set_webview(webview);
     }
@@ -362,7 +372,7 @@ tauri::Builder::default()
     #[cfg(desktop)]
     let handler = app_manager
       .menu
-      .prepare_window_menu_creation_handler(window_menu.as_ref(), self.window_builder.get_theme());
+      .prepare_window_menu_creation_handler(window_menu.as_ref(), theme);
     #[cfg(not(desktop))]
     #[allow(clippy::type_complexity)]
     let handler: Option<Box<dyn Fn(tauri_runtime::window::RawWindow<'_>) + Send>> = None;
@@ -404,12 +414,11 @@ tauri::Builder::default()
     let window_label = window.label().to_string();
     // run on the main thread to fix a deadlock on webview.eval if the tracing feature is enabled
     let _ = window.run_on_main_thread(move || {
-      let _ = app_manager.emit(
-        "tauri://window-created",
-        Some(crate::webview::CreatedEvent {
-          label: window_label,
-        }),
-      );
+      let event = crate::EventName::from_str("tauri://window-created");
+      let payload = Some(crate::webview::CreatedEvent {
+        label: window_label,
+      });
+      let _ = app_manager.emit(event, EmitPayload::Serialize(&payload));
     });
 
     Ok(window)
@@ -469,6 +478,36 @@ impl<'a, R: Runtime, M: Manager<R>> WindowBuilder<'a, R, M> {
     constraints: tauri_runtime::window::WindowSizeConstraints,
   ) -> Self {
     self.window_builder = self.window_builder.inner_size_constraints(constraints);
+    self
+  }
+
+  /// Prevent the window from overflowing the working area (e.g. monitor size - taskbar size)
+  /// on creation, which means the window size will be limited to `monitor size - taskbar size`
+  ///
+  /// **NOTE**: The overflow check is only performed on window creation, resizes can still overflow
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **iOS / Android:** Unsupported.
+  #[must_use]
+  pub fn prevent_overflow(mut self) -> Self {
+    self.window_builder = self.window_builder.prevent_overflow();
+    self
+  }
+
+  /// Prevent the window from overflowing the working area (e.g. monitor size - taskbar size)
+  /// on creation with a margin, which means the window size will be limited to `monitor size - taskbar size - margin size`
+  ///
+  /// **NOTE**: The overflow check is only performed on window creation, resizes can still overflow
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **iOS / Android:** Unsupported.
+  #[must_use]
+  pub fn prevent_overflow_with_margin(mut self, margin: impl Into<Size>) -> Self {
+    self.window_builder = self
+      .window_builder
+      .prevent_overflow_with_margin(margin.into());
     self
   }
 
@@ -1017,7 +1056,7 @@ impl<R: Runtime> Window<R> {
     let window_ = self.clone();
     self.run_on_main_thread(move || {
       let res = webview_builder.build(window_, position, size);
-      tx.send(res.map_err(Into::into)).unwrap();
+      tx.send(res).unwrap();
     })?;
     rx.recv().unwrap()
   }
@@ -1396,6 +1435,19 @@ impl<R: Runtime> Window<R> {
   /// Whether the window is enabled or disabled.
   pub fn is_enabled(&self) -> crate::Result<bool> {
     self.window.dispatcher.is_enabled().map_err(Into::into)
+  }
+
+  /// Determines if this window should always be on top of other windows.
+  ///
+  /// ## Platform-specific
+  ///
+  /// - **iOS / Android:** Unsupported.
+  pub fn is_always_on_top(&self) -> crate::Result<bool> {
+    self
+      .window
+      .dispatcher
+      .is_always_on_top()
+      .map_err(Into::into)
   }
 
   /// Gets the window's native maximize button state
@@ -2150,8 +2202,9 @@ tauri::Builder::default()
   where
     F: Fn(Event) + Send + 'static,
   {
+    let event = EventName::new(event.into()).unwrap();
     self.manager.listen(
-      event.into(),
+      event,
       EventTarget::Window {
         label: self.label().to_string(),
       },
@@ -2166,8 +2219,9 @@ tauri::Builder::default()
   where
     F: FnOnce(Event) + Send + 'static,
   {
+    let event = EventName::new(event.into()).unwrap();
     self.manager.once(
-      event.into(),
+      event,
       EventTarget::Window {
         label: self.label().to_string(),
       },
@@ -2209,94 +2263,7 @@ tauri::Builder::default()
   }
 }
 
-impl<R: Runtime> Emitter<R> for Window<R> {
-  /// Emits an event to all [targets](EventTarget).
-  ///
-  /// # Examples
-  #[cfg_attr(
-    feature = "unstable",
-    doc = r####"
-```
-use tauri::Emitter;
-
-#[tauri::command]
-fn synchronize(window: tauri::Window) {
-  // emits the synchronized event to all webviews
-  window.emit("synchronized", ());
-}
-  ```
-  "####
-  )]
-  fn emit<S: Serialize + Clone>(&self, event: &str, payload: S) -> crate::Result<()> {
-    self.manager.emit(event, payload)
-  }
-
-  /// Emits an event to all [targets](EventTarget) matching the given target.
-  ///
-  /// # Examples
-  #[cfg_attr(
-    feature = "unstable",
-    doc = r####"
-```
-use tauri::{Emitter, EventTarget};
-
-#[tauri::command]
-fn download(window: tauri::Window) {
-  for i in 1..100 {
-    std::thread::sleep(std::time::Duration::from_millis(150));
-    // emit a download progress event to all listeners
-    window.emit_to(EventTarget::any(), "download-progress", i);
-    // emit an event to listeners that used App::listen or AppHandle::listen
-    window.emit_to(EventTarget::app(), "download-progress", i);
-    // emit an event to any webview/window/webviewWindow matching the given label
-    window.emit_to("updater", "download-progress", i); // similar to using EventTarget::labeled
-    window.emit_to(EventTarget::labeled("updater"), "download-progress", i);
-    // emit an event to listeners that used WebviewWindow::listen
-    window.emit_to(EventTarget::webview_window("updater"), "download-progress", i);
-  }
-}
-```
-"####
-  )]
-  fn emit_to<I, S>(&self, target: I, event: &str, payload: S) -> crate::Result<()>
-  where
-    I: Into<EventTarget>,
-    S: Serialize + Clone,
-  {
-    self.manager.emit_to(target, event, payload)
-  }
-
-  /// Emits an event to all [targets](EventTarget) based on the given filter.
-  ///
-  /// # Examples
-  #[cfg_attr(
-    feature = "unstable",
-    doc = r####"
-```
-use tauri::{Emitter, EventTarget};
-
-#[tauri::command]
-fn download(window: tauri::Window) {
-  for i in 1..100 {
-    std::thread::sleep(std::time::Duration::from_millis(150));
-    // emit a download progress event to the updater window
-    window.emit_filter("download-progress", i, |t| match t {
-      EventTarget::WebviewWindow { label } => label == "main",
-      _ => false,
-    });
-  }
-}
-  ```
-  "####
-  )]
-  fn emit_filter<S, F>(&self, event: &str, payload: S, filter: F) -> crate::Result<()>
-  where
-    S: Serialize + Clone,
-    F: Fn(&EventTarget) -> bool,
-  {
-    self.manager.emit_filter(event, payload, filter)
-  }
-}
+impl<R: Runtime> Emitter<R> for Window<R> {}
 
 /// The [`WindowEffectsConfig`] object builder
 #[derive(Default)]
