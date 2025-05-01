@@ -32,7 +32,7 @@ use cargo_mobile2::{
   opts::{NoiseLevel, Profile},
 };
 
-use std::env::set_current_dir;
+use std::{env::set_current_dir, path::PathBuf};
 
 const PHYSICAL_IPHONE_DEV_WARNING: &str = "To develop on physical phones you need the `--host` option (not required for Simulators). See the documentation for more information: https://v2.tauri.app/develop/#development-server";
 
@@ -101,6 +101,9 @@ pub struct Options {
   /// Specify port for the built-in dev server for static files. Defaults to 1430.
   #[clap(long, env = "TAURI_CLI_PORT")]
   pub port: Option<u16>,
+  /// Path to the certificate file used by your dev server. Required when using HTTPS.
+  #[clap(long, env = "TAURI_DEV_ROOT_CERTIFICATE_PATH")]
+  pub root_certificate_path: Option<PathBuf>,
 }
 
 impl From<Options> for DevOptions {
@@ -133,6 +136,14 @@ pub fn command(options: Options, noise_level: NoiseLevel) -> Result<()> {
 }
 
 fn run_command(options: Options, noise_level: NoiseLevel) -> Result<()> {
+  // setup env additions before calling env()
+  if let Some(root_certificate_path) = &options.root_certificate_path {
+    std::env::set_var(
+      "TAURI_DEV_ROOT_CERTIFICATE",
+      std::fs::read_to_string(root_certificate_path).context("failed to read certificate file")?,
+    );
+  }
+
   let env = env()?;
   let device = if options.open {
     None
