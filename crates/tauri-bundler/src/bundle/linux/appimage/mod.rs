@@ -9,13 +9,13 @@ use std::{
 
 use crate::Settings;
 
-mod experimental;
 mod linuxdeploy;
+mod sharun;
 
 // TODO: This needs to be a config, not an env var post PoC
 pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
   if std::env::var("TAURI_NEW_APPIMAGE").unwrap_or("false".to_string()) == "true" {
-    experimental::bundle_project(settings)
+    sharun::bundle_project(settings)
   } else {
     linuxdeploy::bundle_project(settings)
   }
