@@ -82,6 +82,7 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
   let appimage_filename = format!(
     "{}_{}_{}.AppImage",
     settings.product_name(),
+    // TODO: Remove this if upinfo is provided
     settings.version_string(),
     appimage_arch
   );
