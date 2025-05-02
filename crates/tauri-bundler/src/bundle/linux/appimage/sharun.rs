@@ -172,15 +172,19 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     .output_ok()?;
 
   // TODO: $ARCH replacement
-  if let Some(upinfo) = std::env::var("UPINFO")
+  let zsync = if let Some(upinfo) = std::env::var("UPINFO")
     .ok()
     .or(settings.appimage().update_information.clone())
   {
-    Command::new(&uruntime_lite).args(["--appimage-addupdinfo", &upinfo]);
-  }
+    Command::new(&uruntime_lite)
+      .args(["--appimage-addupdinfo", &upinfo])
+      .output_ok()?;
+    true
+  } else {
+    false
+  };
 
   // TODO(--NOW--): verbosity
-  // TODO(--NOW--): squashfs
   Command::new(&uruntime)
     .env("ARCH", tools_arch)
     .args([
@@ -208,6 +212,16 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
   {
     use std::os::unix::fs::PermissionsExt;
     fs::set_permissions(&appimage_path, fs::Permissions::from_mode(0o770))?;
+  }
+
+  if zsync {
+    Command::new("zsyncmake")
+      .args([
+        &appimage_path.to_string_lossy(),
+        "-u",
+        &appimage_path.to_string_lossy(),
+      ])
+      .output_ok()?;
   }
 
   fs::remove_dir_all(package_dir)?;
