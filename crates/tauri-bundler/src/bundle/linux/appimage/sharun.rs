@@ -48,7 +48,8 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 
   fs::create_dir_all(&tools_path)?;
 
-  let (lib4bin, uruntime) = prepare_tools(&tools_path, tools_arch)?;
+  let (lib4bin, uruntime, uruntime_lite) =
+    prepare_tools(&tools_path, tools_arch, settings.appimage().squashfs)?;
 
   let package_dir = settings
     .project_out_directory()
@@ -175,7 +176,7 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     .ok()
     .or(settings.appimage().update_information.clone())
   {
-    Command::new(&uruntime).args(["--appimage-addupdinfo", &upinfo]);
+    Command::new(&uruntime_lite).args(["--appimage-addupdinfo", &upinfo]);
   }
 
   // TODO(--NOW--): verbosity
@@ -196,7 +197,7 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
       "-S26",
       "-B8",
       "--header",
-      &uruntime.to_string_lossy(),
+      &uruntime_lite.to_string_lossy(),
       "-i",
       &app_dir_path.to_string_lossy(),
       "-o",
@@ -214,11 +215,22 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 }
 
 // TODO: versions
-fn prepare_tools(tools_path: &Path, arch: &str) -> crate::Result<(PathBuf, PathBuf)> {
-  let uruntime = tools_path.join(format!("uruntime-appimage-dwarfs-{arch}"));
+fn prepare_tools(
+  tools_path: &Path,
+  arch: &str,
+  squashfs: bool,
+) -> crate::Result<(PathBuf, PathBuf, PathBuf)> {
+  let fstype = if squashfs { "squashfs" } else { "dwarfs" };
+  let uruntime = tools_path.join(format!("uruntime-appimage-{fstype}-{arch}"));
   if !uruntime.exists() {
-    let data = download(&format!("https://github.com/VHSgunzo/uruntime/releases/latest/download/uruntime-appimage-dwarfs-{arch}"))?;
+    let data = download(&format!("https://github.com/VHSgunzo/uruntime/releases/latest/download/uruntime-appimage-{fstype}-{arch}"))?;
     write_and_make_executable(&uruntime, data)?;
+  }
+
+  let uruntime_lite = tools_path.join(format!("uruntime-appimage-{fstype}-lite-{arch}"));
+  if !uruntime_lite.exists() {
+    let data = download(&format!("https://github.com/VHSgunzo/uruntime/releases/latest/download/uruntime-appimage-{fstype}-lite-{arch}"))?;
+    write_and_make_executable(&uruntime_lite, data)?;
   }
 
   let lib4bin = tools_path.join(format!("lib4bin-{arch}"));
@@ -228,5 +240,5 @@ fn prepare_tools(tools_path: &Path, arch: &str) -> crate::Result<(PathBuf, PathB
     write_and_make_executable(&lib4bin, data)?;
   }
 
-  Ok((lib4bin, uruntime))
+  Ok((lib4bin, uruntime, uruntime_lite))
 }
