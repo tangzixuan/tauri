@@ -1386,7 +1386,7 @@ fn tauri_config_to_bundle_settings(
       bundle_xdg_open: false,
       use_new_format: config.linux.appimage.use_new_format,
       squashfs: config.linux.appimage.squashfs,
-      zsync: config.linux.appimage.zsync.map(|url| url.to_string()),
+      update_information: config.linux.appimage.update_information,
     },
     rpm: RpmSettings {
       depends: if depends_rpm.is_empty() {

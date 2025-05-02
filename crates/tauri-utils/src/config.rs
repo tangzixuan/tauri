@@ -340,10 +340,10 @@ pub struct AppImageConfig {
   /// Ignored if `use_new_format` is disabled.
   #[serde(default)]
   pub squashfs: bool,
-  /// URL to the AppImage's zsync update file. See
-  /// <https://docs.appimage.org/packaging-guide/optional/updates.html> for more information.
-  #[serde(default)]
-  pub zsync: Option<Url>,
+  /// Update information to forward to the AppImage tooling according to <https://github.com/AppImage/AppImageSpec/blob/master/draft.md#update-information>.
+  /// Can also be provided via the `UPINFO` env var.
+  #[serde(default, alias = "update-information")]
+  pub update_information: Option<String>,
 }
 
 /// Configuration for Debian (.deb) bundles.

@@ -170,8 +170,15 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     .arg("-g")
     .output_ok()?;
 
+  // TODO: $ARCH replacement
+  if let Some(upinfo) = std::env::var("UPINFO")
+    .ok()
+    .or(settings.appimage().update_information.clone())
+  {
+    Command::new(&uruntime).args(["--appimage-addupdinfo", &upinfo]);
+  }
+
   // TODO(--NOW--): verbosity
-  // TODO(--NOW--): -u
   // TODO(--NOW--): squashfs
   Command::new(&uruntime)
     .env("ARCH", tools_arch)

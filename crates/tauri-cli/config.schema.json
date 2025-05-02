@@ -95,8 +95,8 @@
             "bundleMediaFramework": false,
             "files": {},
             "squashfs": false,
-            "useNewFormat": false,
-            "zsync": null
+            "updateInformation": null,
+            "useNewFormat": false
           },
           "deb": {
             "files": {}
@@ -2112,8 +2112,8 @@
               "bundleMediaFramework": false,
               "files": {},
               "squashfs": false,
-              "useNewFormat": false,
-              "zsync": null
+              "updateInformation": null,
+              "useNewFormat": false
             },
             "deb": {
               "files": {}
@@ -2970,8 +2970,8 @@
             "bundleMediaFramework": false,
             "files": {},
             "squashfs": false,
-            "useNewFormat": false,
-            "zsync": null
+            "updateInformation": null,
+            "useNewFormat": false
           },
           "allOf": [
             {
@@ -3033,14 +3033,13 @@
           "default": false,
           "type": "boolean"
         },
-        "zsync": {
-          "description": "URL to the AppImage's zsync update file. See\n <https://docs.appimage.org/packaging-guide/optional/updates.html> for more information.",
+        "updateInformation": {
+          "description": "Update information to forward to the AppImage tooling according to <https://github.com/AppImage/AppImageSpec/blob/master/draft.md#update-information>.\n Can also be provided via the `UPINFO` env var.",
           "default": null,
           "type": [
             "string",
             "null"
-          ],
-          "format": "uri"
+          ]
         }
       },
       "additionalProperties": false

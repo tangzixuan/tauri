@@ -242,11 +242,9 @@ pub struct AppImageSettings {
   ///
   /// Ignored if `use_new_format` is disabled.
   pub squashfs: bool,
-  /// URL to the AppImage's zsync update file. See
-  /// <https://docs.appimage.org/packaging-guide/optional/updates.html> for more information.
-  ///
-  /// Ignored if `use_new_format` is disabled.
-  pub zsync: Option<String>,
+  /// Update information to forward to the AppImage tooling according to <https://github.com/AppImage/AppImageSpec/blob/master/draft.md#update-information>.
+  /// Can also be provided via the `UPINFO` env var.
+  pub update_information: Option<String>,
 }
 
 /// The RPM bundle settings.
