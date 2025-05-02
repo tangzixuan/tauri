@@ -320,7 +320,7 @@ pub struct AppImageConfig {
   /// The files to include in the Appimage Binary.
   #[serde(default)]
   pub files: HashMap<PathBuf, PathBuf>,
-  /// Use the new AppImage bundler based on sharun instead of linuxdeploy.
+  /// Use the new AppImage bundler based on sharun and uruntime instead of linuxdeploy.
   ///
   /// Enabling this is strongly recommended as it will produce truly portable
   /// AppImages that allow you to build on newer distros while still supporting

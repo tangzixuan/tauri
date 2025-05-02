@@ -48,8 +48,7 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 
   fs::create_dir_all(&tools_path)?;
 
-  #[allow(unused)]
-  let (appimagetool, lib4bin, uruntime) = prepare_tools(&tools_path, tools_arch)?;
+  let (lib4bin, uruntime) = prepare_tools(&tools_path, tools_arch)?;
 
   let package_dir = settings
     .project_out_directory()
@@ -125,17 +124,6 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     app_dir_path.join(".DirIcon"),
   )?;
 
-  /* std::os::unix::fs::symlink(
-    app_dir_share.join(format!("applications/{product_name}.desktop")),
-    app_dir_path.join(format!("{product_name}.desktop")),
-  )?; */
-
-  let strip = if std::env::var("NO_STRIP").unwrap_or("false".to_string()) == "true" {
-    ""
-  } else {
-    "-s"
-  };
-
   let verbosity = match settings.log_level() {
     log::Level::Error => "-q", // errors only
     log::Level::Info => "",    // errors + "normal logs" (mostly rpath)
@@ -151,7 +139,7 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     .args([
       "-c",
       &format!(
-        r#"{} -p {} {} -k {} \
+        r#"{} -p {} -s -k {} \
 /usr/lib/x86_64-linux-gnu/libGL* \
 /usr/lib/x86_64-linux-gnu/libEGL* \
 /usr/lib/x86_64-linux-gnu/libvulkan* \
@@ -163,7 +151,6 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 /usr/lib/x86_64-linux-gnu/gio/modules/*"#,
         lib4bin.to_string_lossy(),
         verbosity,
-        strip,
         &app_dir_path
           .join(format!("usr/bin/{}", main_binary.name()))
           .to_string_lossy()
@@ -184,24 +171,9 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     .output_ok()?;
 
   // TODO(--NOW--): verbosity
-  // TODO(later): -u
-  // TODO(later): check out uruntime
-  // ARCH for appimagetool should be x86_64, i686, aarch64, or armhf
-  Command::new(appimagetool)
-    .env("ARCH", tools_arch)
-    .args([
-      "--comp",
-      "zstd",
-      "--mksquashfs-opt",
-      "-Xcompression-level",
-      "--mksquashfs-opt",
-      "22",
-      "-n",
-      &app_dir_path.to_string_lossy(),
-      &appimage_path.to_string_lossy(),
-    ])
-    .output_ok()?;
-  /* Command::new(&uruntime)
+  // TODO(--NOW--): -u
+  // TODO(--NOW--): squashfs
+  Command::new(&uruntime)
     .env("ARCH", tools_arch)
     .args([
       "--appimage-mkdwarfs",
@@ -224,22 +196,18 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
       &appimage_path.to_string_lossy(),
     ])
     .output_ok()?;
+
   {
     use std::os::unix::fs::PermissionsExt;
-    fs::set_permissions(appimage_path, fs::Permissions::from_mode(0o770))?;
-  } */
+    fs::set_permissions(&appimage_path, fs::Permissions::from_mode(0o770))?;
+  }
 
   fs::remove_dir_all(package_dir)?;
   Ok(vec![appimage_path])
 }
 
-fn prepare_tools(tools_path: &Path, arch: &str) -> crate::Result<(PathBuf, PathBuf, PathBuf)> {
-  let appimagetool = tools_path.join(format!("appimagetool-{arch}.AppImage"));
-  if !appimagetool.exists() {
-    let data = download(&format!("https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-{arch}.AppImage"))?;
-    write_and_make_executable(&appimagetool, data)?;
-  }
-
+// TODO: versions
+fn prepare_tools(tools_path: &Path, arch: &str) -> crate::Result<(PathBuf, PathBuf)> {
   let uruntime = tools_path.join(format!("uruntime-appimage-dwarfs-{arch}"));
   if !uruntime.exists() {
     let data = download(&format!("https://github.com/VHSgunzo/uruntime/releases/latest/download/uruntime-appimage-dwarfs-{arch}"))?;
@@ -253,5 +221,5 @@ fn prepare_tools(tools_path: &Path, arch: &str) -> crate::Result<(PathBuf, PathB
     write_and_make_executable(&lib4bin, data)?;
   }
 
-  Ok((appimagetool, lib4bin, uruntime))
+  Ok((lib4bin, uruntime))
 }

@@ -224,7 +224,7 @@ pub struct AppImageSettings {
   pub bundle_media_framework: bool,
   /// Whether to include the `xdg-open` binary.
   pub bundle_xdg_open: bool,
-  /// Use the new AppImage bundler based on sharun instead of linuxdeploy.
+  /// Use the new AppImage bundler based on sharun and uruntime instead of linuxdeploy.
   ///
   /// Enabling this is strongly recommended as it will produce truly portable
   /// AppImages that allow you to build on newer distros while still supporting
