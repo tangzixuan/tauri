@@ -3034,7 +3034,7 @@
           "type": "boolean"
         },
         "updateInformation": {
-          "description": "Update information to forward to the AppImage tooling according to <https://github.com/AppImage/AppImageSpec/blob/master/draft.md#update-information>.\n Can also be provided via the `UPINFO` env var.\n\n Requires `zsyncmake` to be installed on the build system.",
+          "description": "Update information to forward to the AppImage tooling according to <https://github.com/AppImage/AppImageSpec/blob/master/draft.md#update-information>.\n Can also be provided via the `UPINFO` env var.\n\n When enabled, the generated AppImage will not include the app version in its file name.\n\n Requires `zsyncmake` to be installed on the build system.",
           "default": null,
           "type": [
             "string",

@@ -71,6 +71,10 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     main_binary.set_name(main_binary_name_kebab);
   }
 
+  let upinfo = std::env::var("UPINFO")
+    .ok()
+    .or(settings.appimage().update_information.clone());
+
   // generate deb_folder structure
   let (data_dir, icons) = debian::generate_data(&settings, &package_dir)
     .with_context(|| "Failed to build data folders and files")?;
@@ -79,13 +83,15 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 
   fs::create_dir_all(&output_path)?;
   let app_dir_path = output_path.join(format!("{}.AppDir", settings.product_name()));
-  let appimage_filename = format!(
-    "{}_{}_{}.AppImage",
-    settings.product_name(),
-    // TODO: Remove this if upinfo is provided
-    settings.version_string(),
-    appimage_arch
-  );
+  let appimage_filename = if upinfo.is_some() {
+    format!("{}_{appimage_arch}.AppImage", settings.product_name())
+  } else {
+    format!(
+      "{}_{}_{appimage_arch}.AppImage",
+      settings.product_name(),
+      settings.version_string()
+    )
+  };
   let appimage_path = output_path.join(&appimage_filename);
 
   fs::create_dir_all(&tools_path)?;
@@ -173,17 +179,11 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     .output_ok()?;
 
   // TODO: $ARCH replacement
-  let zsync = if let Some(upinfo) = std::env::var("UPINFO")
-    .ok()
-    .or(settings.appimage().update_information.clone())
-  {
+  if let Some(upinfo) = upinfo.as_deref() {
     Command::new(&uruntime_lite)
-      .args(["--appimage-addupdinfo", &upinfo])
+      .args(["--appimage-addupdinfo", upinfo])
       .output_ok()?;
-    true
-  } else {
-    false
-  };
+  }
 
   // TODO(--NOW--): verbosity
   Command::new(&uruntime)
@@ -215,7 +215,7 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     fs::set_permissions(&appimage_path, fs::Permissions::from_mode(0o770))?;
   }
 
-  if zsync {
+  if upinfo.is_some() {
     Command::new("zsyncmake")
       .args([
         &appimage_path.to_string_lossy(),

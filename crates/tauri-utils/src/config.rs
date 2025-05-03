@@ -343,6 +343,8 @@ pub struct AppImageConfig {
   /// Update information to forward to the AppImage tooling according to <https://github.com/AppImage/AppImageSpec/blob/master/draft.md#update-information>.
   /// Can also be provided via the `UPINFO` env var.
   ///
+  /// When enabled, the generated AppImage will not include the app version in its file name.
+  ///
   /// Requires `zsyncmake` to be installed on the build system.
   #[serde(default, alias = "update-information")]
   pub update_information: Option<String>,
@@ -1501,9 +1503,9 @@ impl schemars::JsonSchema for Color {
 pub enum BackgroundThrottlingPolicy {
   /// A policy where background throttling is disabled
   Disabled,
-  /// A policy where a web view that’s not in a window fully suspends tasks. This is usually the default behavior in case no policy is set.
+  /// A policy where a web view that's not in a window fully suspends tasks. This is usually the default behavior in case no policy is set.
   Suspend,
-  /// A policy where a web view that’s not in a window limits processing, but does not fully suspend tasks.
+  /// A policy where a web view that's not in a window limits processing, but does not fully suspend tasks.
   Throttle,
 }
 

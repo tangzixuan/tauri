@@ -245,6 +245,8 @@ pub struct AppImageSettings {
   /// Update information to forward to the AppImage tooling according to <https://github.com/AppImage/AppImageSpec/blob/master/draft.md#update-information>.
   /// Can also be provided via the `UPINFO` env var.
   ///
+  /// When enabled, the generated AppImage will not include the app version in its file name.
+  ///
   /// Requires `zsyncmake` to be installed on the build system.
   pub update_information: Option<String>,
 }
