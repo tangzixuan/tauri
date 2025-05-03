@@ -19,6 +19,7 @@ use crate::{
 use super::write_and_make_executable;
 
 // TODO: xdg-open exec script
+// TODO: TLS
 pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
   // for backwards compat we keep the amd64 and i386 rewrites in the filename
   let appimage_arch = match settings.binary_arch() {
