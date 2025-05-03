@@ -18,6 +18,7 @@ use crate::{
 
 use super::write_and_make_executable;
 
+// TODO: xdg-open exec script
 pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
   // for backwards compat we keep the amd64 and i386 rewrites in the filename
   let appimage_arch = match settings.binary_arch() {
@@ -139,29 +140,40 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     _ => "",
   };
 
+  // TODO: Maybe missing alsa, pipewire, whatever?
+  let gst = if settings.appimage().bundle_media_framework {
+    format!(
+      r#"
+/usr/lib/{tools_arch}-linux-gnu/libpulsecommon* \
+/usr/lib/{tools_arch}-linux-gnu/gstreamer-1.0/* \
+/usr/lib/{tools_arch}-linux-gnu/gstreamer1.0/gstreamer-1.0/* \
+"#
+    )
+  } else {
+    "".to_string()
+  };
+
   // TODO(--NOW--): Check if we can make parts of the opengl (incl. libvulkan) deps optional
   // TODO(later): rustify this (finding the paths in rust instead of using bash glob patterns)
-  // TODO(later): Consider putting gst and pulse behind bundleMediaFramwork for ~150mb -> ~130mb
   Command::new("/bin/sh")
     .current_dir(&app_dir_path)
     .args([
       "-c",
       &format!(
-        r#"{} -p {} -s -k {} \
-/usr/lib/x86_64-linux-gnu/libGL* \
-/usr/lib/x86_64-linux-gnu/libEGL* \
-/usr/lib/x86_64-linux-gnu/libvulkan* \
-/usr/lib/x86_64-linux-gnu/dri/* \
-/usr/lib/x86_64-linux-gnu/libpulsecommon* \
-/usr/lib/x86_64-linux-gnu/libnss_mdns* \
-/usr/lib/x86_64-linux-gnu/gstreamer-1.0/* \
-/usr/lib/x86_64-linux-gnu/libwebkit2gtk-4.1* \
-/usr/lib/x86_64-linux-gnu/gio/modules/*"#,
+        r#"{} -p {verbosity} -s -k {} \
+/usr/lib/{tools_arch}-linux-gnu/libwebkit2gtk-4.1* \{gst}
+/usr/lib/{tools_arch}-linux-gnu/gdk-pixbuf-*/*/*/* \
+/usr/lib/{tools_arch}-linux-gnu/gio/modules/* \
+/usr/lib/{tools_arch}-linux-gnu/libnss*.so* \
+/usr/lib/{tools_arch}-linux-gnu/libGL* \
+/usr/lib/{tools_arch}-linux-gnu/libEGL* \
+/usr/lib/{tools_arch}-linux-gnu/libvulkan* \
+/usr/lib/{tools_arch}-linux-gnu/dri/*
+"#,
         lib4bin.to_string_lossy(),
-        verbosity,
         &app_dir_path
           .join(format!("usr/bin/{}", main_binary.name()))
-          .to_string_lossy()
+          .to_string_lossy(),
       ),
     ])
     .output_ok()?;
@@ -178,10 +190,12 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
     .arg("-g")
     .output_ok()?;
 
-  // TODO: $ARCH replacement
   if let Some(upinfo) = upinfo.as_deref() {
     Command::new(&uruntime_lite)
-      .args(["--appimage-addupdinfo", upinfo])
+      .args([
+        "--appimage-addupdinfo",
+        &upinfo.replace("$ARCH", tools_arch),
+      ])
       .output_ok()?;
   }
 
