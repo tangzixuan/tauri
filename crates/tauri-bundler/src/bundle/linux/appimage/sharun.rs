@@ -85,15 +85,11 @@ pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
 
   fs::create_dir_all(&output_path)?;
   let app_dir_path = output_path.join(format!("{}.AppDir", settings.product_name()));
-  let appimage_filename = if upinfo.is_some() {
-    format!("{}_{appimage_arch}.AppImage", settings.product_name())
-  } else {
-    format!(
-      "{}_{}_{appimage_arch}.AppImage",
-      settings.product_name(),
-      settings.version_string()
-    )
-  };
+  let appimage_filename = format!(
+    "{}_{}_{appimage_arch}.AppImage",
+    settings.product_name(),
+    settings.version_string()
+  );
   let appimage_path = output_path.join(&appimage_filename);
 
   fs::create_dir_all(&tools_path)?;
