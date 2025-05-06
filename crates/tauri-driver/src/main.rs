@@ -11,6 +11,8 @@
   html_favicon_url = "https://github.com/tauri-apps/tauri/raw/dev/.github/icon.png"
 )]
 
+use std::{net::TcpStream, time::Duration};
+
 #[cfg(any(target_os = "linux", windows))]
 mod cli;
 #[cfg(any(target_os = "linux", windows))]
@@ -43,10 +45,38 @@ fn main() {
   let driver = driver
     .spawn()
     .expect("error while running native webdriver");
+  wait_for_server(
+    &format!("{}:{}", args.native_host, args.native_port),
+    Duration::from_secs(2),
+  )
+  .expect("failed to start WebDriver");
 
   // start our webdriver intermediary node
   if let Err(e) = server::run(args, driver) {
     eprintln!("error while running server: {}", e);
     std::process::exit(1);
+  }
+}
+
+fn wait_for_server(addr: &str, retry_interval: Duration) -> std::io::Result<()> {
+  loop {
+    match TcpStream::connect(addr) {
+      Ok(_) => {
+        println!("WebDriver server is available at {}", addr);
+        return Ok(());
+      }
+      Err(e) => {
+        if e.kind() == std::io::ErrorKind::ConnectionRefused
+          || e.kind() == std::io::ErrorKind::TimedOut
+        {
+          // Server not up yet, retry
+          println!("Waiting for WebDriver server at {}...", addr);
+          std::thread::sleep(retry_interval);
+        } else {
+          // Unexpected error
+          return Err(e);
+        }
+      }
+    }
   }
 }
