@@ -205,8 +205,6 @@ xdg-open "$@"
 
   fs_utils::remove_dir_all(&app_dir_path.join("usr/"))?;
 
-  // TODO(--NOW--): gstreamer bins
-
   let sharun = app_dir_path.join("sharun");
   fs::copy(&sharun, app_dir_path.join("AppRun"))?;
 
