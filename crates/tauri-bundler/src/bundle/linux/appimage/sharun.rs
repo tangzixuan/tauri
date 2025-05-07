@@ -19,7 +19,7 @@ use crate::{
 use super::write_and_make_executable;
 
 // TODO: Maybe bundle xdg-open and maybeee xdg-mime as a fallback
-// TODO: TLS
+// TODO: Monitor TLS support / certificates - seems to be working in initial tests
 pub fn bundle_project(settings: &Settings) -> crate::Result<Vec<PathBuf>> {
   // for backwards compat we keep the amd64 and i386 rewrites in the filename
   let appimage_arch = match settings.binary_arch() {
@@ -222,7 +222,7 @@ xdg-open "$@"
       .output_ok()?;
   }
 
-  // TODO: verbosity
+  // TODO: verbosity - uruntime doesn't expose any settings and doesn't log much
   Command::new(&uruntime)
     .env("ARCH", tools_arch)
     .args([

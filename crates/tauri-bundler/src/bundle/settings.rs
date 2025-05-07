@@ -232,7 +232,7 @@ pub struct AppImageSettings {
   /// supports Wayland without forcing the use of XWayland.
   ///
   /// The drawbacks of this option is that the AppImage will be larger, only supports
-  /// x86_64 and aarch64 and currently can only be built on Debian/Ubuntu based systems.
+  /// x86_64 and aarch64, and currently can only be built on Debian/Ubuntu based systems.
   /// For Ubuntu it requires at least 24.04 and above.
   pub use_new_format: bool,
   /// Make the AppImage use squashfs instead of dwarfs.
