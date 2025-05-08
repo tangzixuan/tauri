@@ -203,6 +203,7 @@ where
       }
     });
     log::error!("{message}");
+    log::error!("Please re-run the command with the --verbose flag to see what went wrong.");
     exit(1);
   }
 }
