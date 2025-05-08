@@ -185,7 +185,7 @@ xdg-open "$@"
     .args([
       "-c",
       &format!(
-        r#"{} -p {verbosity} -k {} \
+        r#""{}" -p {verbosity} -k "{}" \
 /usr/lib/{tools_arch}-linux-gnu/libwebkit2gtk-4.1* \{gst}
 /usr/lib/{tools_arch}-linux-gnu/gdk-pixbuf-*/*/*/* \
 /usr/lib/{tools_arch}-linux-gnu/gio/modules/* \
@@ -218,6 +218,7 @@ xdg-open "$@"
 
   if let Some(upinfo) = upinfo.as_deref() {
     Command::new(&uruntime_lite)
+      .current_dir(&app_dir_path)
       .args([
         "--appimage-addupdinfo",
         &upinfo.replace("$ARCH", tools_arch),
