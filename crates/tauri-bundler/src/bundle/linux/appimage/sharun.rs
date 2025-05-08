@@ -184,7 +184,6 @@ xdg-open "$@"
     .current_dir(&app_dir_path)
     .args([
       "-c",
-      // /usr/lib/{tools_arch}-linux-gnu/libEGL* \
       &format!(
         r#"{} -p {verbosity} -s -k {} \
 /usr/lib/{tools_arch}-linux-gnu/libwebkit2gtk-4.1* \{gst}
@@ -192,6 +191,7 @@ xdg-open "$@"
 /usr/lib/{tools_arch}-linux-gnu/gio/modules/* \
 /usr/lib/{tools_arch}-linux-gnu/libnss*.so* \
 /usr/lib/{tools_arch}-linux-gnu/libGL* \
+/usr/lib/{tools_arch}-linux-gnu/libEGL* \
 /usr/lib/{tools_arch}-linux-gnu/libvulkan* \
 /usr/lib/{tools_arch}-linux-gnu/dri/*
 "#,
