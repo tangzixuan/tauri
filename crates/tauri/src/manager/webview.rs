@@ -5,8 +5,7 @@
 use std::{
   borrow::Cow,
   collections::{HashMap, HashSet},
-  fmt,
-  fs::create_dir_all,
+  fmt, fs,
   sync::{Arc, Mutex, MutexGuard},
 };
 
@@ -510,14 +509,19 @@ impl<R: Runtime> WebviewManager<R> {
         crate::path::BaseDirectory::LocalData,
       );
       if let Ok(user_data_dir) = local_app_data {
-        pending.webview_attributes.data_directory = Some(user_data_dir);
-      }
-    }
+        pending.webview_attributes.data_directory = Some(user_data_dir.clone());
 
-    // make sure the directory is created and available to prevent a panic
-    if let Some(user_data_dir) = &pending.webview_attributes.data_directory {
-      if !user_data_dir.exists() {
-        create_dir_all(user_data_dir)?;
+        if !user_data_dir.exists() {
+          // try to create the directory if it doesn't exist
+          if let Err(_e) = fs::create_dir_all(&user_data_dir) {
+            println!(
+              "Failed to create user data directory: {} with err: {_e}, falling back to no data dir aka current executable dir",
+              user_data_dir.display()
+            );
+
+            pending.webview_attributes.data_directory = None;
+          }
+        }
       }
     }
 
