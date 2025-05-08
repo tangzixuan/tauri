@@ -201,7 +201,8 @@ xdg-open "$@"
           .to_string_lossy(),
       ),
     ])
-    .output_ok()?;
+    .output_ok()
+    .context("lib4bin command failed to run.")?;
 
   fs_utils::remove_dir_all(&app_dir_path.join("usr/"))?;
 
@@ -211,7 +212,8 @@ xdg-open "$@"
   Command::new(sharun)
     .current_dir(&app_dir_path)
     .arg("-g")
-    .output_ok()?;
+    .output_ok()
+    .context("Failed to generate library path for AppDir.")?;
 
   if let Some(upinfo) = upinfo.as_deref() {
     Command::new(&uruntime_lite)
@@ -219,7 +221,8 @@ xdg-open "$@"
         "--appimage-addupdinfo",
         &upinfo.replace("$ARCH", tools_arch),
       ])
-      .output_ok()?;
+      .output_ok()
+      .context("Failed to add update info.")?;
   }
 
   // TODO: verbosity - uruntime doesn't expose any settings and doesn't log much
@@ -245,7 +248,8 @@ xdg-open "$@"
       "-o",
       &appimage_path.to_string_lossy(),
     ])
-    .output_ok()?;
+    .output_ok()
+    .context("Failed to generate AppImage from AppDir.")?;
 
   {
     use std::os::unix::fs::PermissionsExt;
@@ -259,7 +263,8 @@ xdg-open "$@"
         "-u",
         &appimage_path.to_string_lossy(),
       ])
-      .output_ok()?;
+      .output_ok()
+      .context("Failed to create .zsync file.")?;
   }
 
   fs::remove_dir_all(package_dir)?;

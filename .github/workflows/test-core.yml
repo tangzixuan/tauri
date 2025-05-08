@@ -90,7 +90,7 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          prefix-key: v2
+          prefix-key: v3
           save-if: ${{ matrix.features.key == 'all' }}
 
       - name: test
