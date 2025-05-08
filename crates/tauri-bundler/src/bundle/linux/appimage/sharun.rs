@@ -185,7 +185,7 @@ xdg-open "$@"
     .args([
       "-c",
       &format!(
-        r#"{} -p {verbosity} -s -k {} \
+        r#"{} -p {verbosity} -k {} \
 /usr/lib/{tools_arch}-linux-gnu/libwebkit2gtk-4.1* \{gst}
 /usr/lib/{tools_arch}-linux-gnu/gdk-pixbuf-*/*/*/* \
 /usr/lib/{tools_arch}-linux-gnu/gio/modules/* \
