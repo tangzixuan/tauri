@@ -193,7 +193,8 @@ xdg-open "$@"
 /usr/lib/{tools_arch}-linux-gnu/libGL* \
 /usr/lib/{tools_arch}-linux-gnu/libEGL* \
 /usr/lib/{tools_arch}-linux-gnu/libvulkan* \
-/usr/lib/{tools_arch}-linux-gnu/dri/*
+/usr/lib/{tools_arch}-linux-gnu/dri/* \
+/usr/lib/{tools_arch}-linux-gnu/gbm/*
 "#,
         lib4bin.to_string_lossy(),
         &app_dir_path
