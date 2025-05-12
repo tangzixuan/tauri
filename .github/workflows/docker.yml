@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: install stable
         uses: actions-rs/toolchain@v1
@@ -33,10 +33,10 @@ jobs:
         run: cargo install cross --git https://github.com/cross-rs/cross
 
       - name: Upload cross
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cross
-          path: '~/.cargo/bin/cross'
+          path: "~/.cargo/bin/cross"
           if-no-files-found: error
 
       - name: build CLI
@@ -46,7 +46,7 @@ jobs:
           args: --manifest-path ./tooling/cli/Cargo.toml
 
       - name: Upload CLI
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cargo-tauri
           path: tooling/cli/target/debug/cargo-tauri
@@ -60,11 +60,11 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - { name: 'aarch64-unknown-linux-gnu', filename: 'aarch64' }
+          - { name: "aarch64-unknown-linux-gnu", filename: "aarch64" }
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: install stable
         uses: actions-rs/toolchain@v1
@@ -75,21 +75,21 @@ jobs:
           target: ${{ matrix.target.name }}
 
       - name: Setup node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: 16
 
       - name: Download cross
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: cross
-          path: '~/.cargo/bin'
+          path: "~/.cargo/bin"
 
       - name: Download CLI
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: cargo-tauri
-          path: 'examples/api'
+          path: "examples/api"
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
