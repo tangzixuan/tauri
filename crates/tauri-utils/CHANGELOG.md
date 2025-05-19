@@ -1,5 +1,23 @@
 # Changelog
 
+## \[2.5.0]
+
+### New Features
+
+- [`09c19932d`](https://www.github.com/tauri-apps/tauri/commit/09c19932d2ddf05f28bcdc73796a966532e7ca1c) ([#13304](https://www.github.com/tauri-apps/tauri/pull/13304) by [@39zde](https://www.github.com/tauri-apps/tauri/../../39zde)) Adds the option to configure the HTTP `Service-Worker-Allowed` response header in `app > security > headers`
+
+### Bug Fixes
+
+- [`b52da29d5`](https://www.github.com/tauri-apps/tauri/commit/b52da29d5dbdb675ddba438a335e6a59f620e536) ([#13429](https://www.github.com/tauri-apps/tauri/pull/13429) by [@Legend-Master](https://www.github.com/tauri-apps/tauri/../../Legend-Master)) Fix `mainBinaryName` doesn't work when there's `.` in it
+
+### What's Changed
+
+- [`168629646`](https://www.github.com/tauri-apps/tauri/commit/168629646335f24cc7f1c4a61df22688b2198f98) ([#13418](https://www.github.com/tauri-apps/tauri/pull/13418) by [@Legend-Master](https://www.github.com/tauri-apps/tauri/../../Legend-Master)) Put dynamic ACL into a feature `dynamic-acl`, this is currently enabled by default to align with the previous behaviors, you can disable it through `default-features = false` to reduce the final binary size by not including the ACL references
+
+### Breaking Changes
+
+- [`b7cdb3b39`](https://www.github.com/tauri-apps/tauri/commit/b7cdb3b39ef7e84773ce9312535825801350fa20) ([#13410](https://www.github.com/tauri-apps/tauri/pull/13410) by [@Legend-Master](https://www.github.com/tauri-apps/tauri/../../Legend-Master)) Feature gated the HTML manipulation code in `tauri-utils` behined a flag to reduce compile time
+
 ## \[2.4.0]
 
 ### New Features

@@ -1,5 +1,21 @@
 # Changelog
 
+## \[2.6.1]
+
+### Enhancements
+
+- [`96ecfca42`](https://www.github.com/tauri-apps/tauri/commit/96ecfca428e4e5d9ff5d5eeed3f94a06a466ed02) ([#13406](https://www.github.com/tauri-apps/tauri/pull/13406) by [@amrbashir](https://www.github.com/tauri-apps/tauri/../../amrbashir)) Check if the webview runtime is accessible when creating a webview, returning an error if it doesn't.
+
+### Bug Fixes
+
+- [`f0662e41f`](https://www.github.com/tauri-apps/tauri/commit/f0662e41f4f78ec5a3f88aa76a7367d37d740291) ([#13365](https://www.github.com/tauri-apps/tauri/pull/13365) by [@lucasfernog](https://www.github.com/tauri-apps/tauri/../../lucasfernog)) Fix monitor check on the window prevent overflow implementation.
+- [`4acae1ec0`](https://www.github.com/tauri-apps/tauri/commit/4acae1ec02f2e0b0501d6b79b0bb862893296abd) ([#13443](https://www.github.com/tauri-apps/tauri/pull/13443) by [@Legend-Master](https://www.github.com/tauri-apps/tauri/../../Legend-Master)) Fix `AppHandle::set_theme` crashes or has no effect on macOS if not ran on main thread
+
+### Dependencies
+
+- Upgraded to `tauri-utils@2.5.0`
+- Upgraded to `tauri-runtime@2.6.1`
+
 ## \[2.6.0]
 
 ### New Features

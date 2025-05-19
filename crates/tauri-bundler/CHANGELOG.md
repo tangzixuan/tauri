@@ -1,5 +1,17 @@
 # Changelog
 
+## \[2.4.1]
+
+### Bug Fixes
+
+- [`479cee3d3`](https://www.github.com/tauri-apps/tauri/commit/479cee3d3680f9020005bdfb380d3a9482e286a1) ([#13260](https://www.github.com/tauri-apps/tauri/pull/13260) by [@FabianLars](https://www.github.com/tauri-apps/tauri/../../FabianLars)) The bundler now sets the `ARCH` env var to the current build target to prevent potential issues with `appimagetool`'s auto-detection.
+- [`e045fe32c`](https://www.github.com/tauri-apps/tauri/commit/e045fe32c9b0bed954916dc42528e28ee19f75b8) ([#13334](https://www.github.com/tauri-apps/tauri/pull/13334) by [@lucasfernog](https://www.github.com/tauri-apps/tauri/../../lucasfernog)) Fix custom Windows sign command failing to sign app uninstaller if it references relative paths.
+- [`b52da29d5`](https://www.github.com/tauri-apps/tauri/commit/b52da29d5dbdb675ddba438a335e6a59f620e536) ([#13429](https://www.github.com/tauri-apps/tauri/pull/13429) by [@Legend-Master](https://www.github.com/tauri-apps/tauri/../../Legend-Master)) Fix `mainBinaryName` doesn't work when there's `.` in it
+
+### Dependencies
+
+- Upgraded to `tauri-utils@2.5.0`
+
 ## \[2.4.0]
 
 ### New Features

@@ -1,5 +1,15 @@
 # Changelog
 
+## \[2.5.1]
+
+### Bug Fixes
+
+- [`35aa7e121`](https://www.github.com/tauri-apps/tauri/commit/35aa7e1218f34d0805e280e3ec32529d0cb0d733) ([#13294](https://www.github.com/tauri-apps/tauri/pull/13294) by [@kingsword09](https://www.github.com/tauri-apps/tauri/../../kingsword09)) fix: allow the target directory to be inside frontendDir as long as it is not the Rust target directory inside frontendDir.
+
+### Dependencies
+
+- Upgraded to `tauri-cli@2.5.1`
+
 ## \[2.5.0]
 
 ### New Features
