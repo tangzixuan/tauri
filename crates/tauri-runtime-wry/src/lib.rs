@@ -4405,6 +4405,31 @@ fn handle_event_loop<T: UserEvent>(
     Event::SceneRequested { scene, options } => {
       callback(RunEvent::SceneRequested { scene, options });
     }
+    #[cfg(mobile)]
+    e @ Event::Resumed | e @ Event::Suspended => {
+      let event = match e {
+        Event::Resumed => WindowEvent::Resumed,
+        Event::Suspended => WindowEvent::Suspended,
+        _ => unreachable!(),
+      };
+
+      let windows_ref = windows.0.borrow();
+      windows_ref.values().for_each(|window| {
+        let label = window.label.clone();
+        let window_event_listeners = window.window_event_listeners.clone();
+        let listeners = window_event_listeners.lock().unwrap();
+        for handler in listeners.values() {
+          handler(&event);
+        }
+
+        callback(RunEvent::WindowEvent {
+          label,
+          event: event.clone(),
+        });
+      });
+
+      drop(windows_ref);
+    }
     _ => (),
   }
 }
